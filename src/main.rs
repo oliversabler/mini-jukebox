@@ -80,48 +80,35 @@ impl Player for Jukebox {
             audio_current: Duration::from_secs(0),
             audio_length: total_time,
             progress_bar_next: 1,
-            progress_bar_position: 3,
-            progress_bar_max: 10,
+            progress_bar_position: 1,
+            progress_bar_max: 20,
             player: stdout()
         }
     }
 
     fn draw_metadata(&mut self) {
         execute!(self.player, terminal::Clear(terminal::ClearType::All)).err();
+        
+        let col_width = 9;
 
         queue!(
             self.player,
-            cursor::MoveTo(2, 1),
-            style::PrintStyledContent(
-                format!("Playing: {}", self.metadata.filename).yellow()))
-        .unwrap();
-
-        queue!(
-            self.player,
-            cursor::MoveTo(2, 2),
-            style::PrintStyledContent(
-                format!("Type: {}", self.metadata.mimetype).yellow()))
-        .unwrap();
-
-        queue!(
-            self.player,
-            cursor::MoveTo(2, 3),
-            style::PrintStyledContent(
-                format!("Size: {} bytes", self.metadata.size).yellow()))
-        .unwrap();
-
-        let progress_bar_start = self.progress_bar_position - self.progress_bar_next;
-        queue!(
-            self.player,
-            cursor::MoveTo(progress_bar_start, 4),
-            style::PrintStyledContent(format!("|").red()))
-        .unwrap();
-
-        let progress_bar_end = self.progress_bar_max + self.progress_bar_position;
-        queue!(
-            self.player,
-            cursor::MoveTo(progress_bar_end, 4),
-            style::PrintStyledContent(format!("|").red()))
+            cursor::MoveTo(0, 0),
+            style::PrintStyledContent("Playing:".dark_grey()),
+            cursor::MoveTo(col_width, 0),
+            style::PrintStyledContent(format!("{}", self.metadata.filename).yellow()),
+            cursor::MoveTo(0, 1),
+            style::PrintStyledContent("Type:".dark_grey()),
+            cursor::MoveTo(col_width, 1),
+            style::PrintStyledContent(format!("{}", self.metadata.mimetype).yellow()),
+            cursor::MoveTo(0, 2),
+            style::PrintStyledContent("Size:".dark_grey()),
+            cursor::MoveTo(col_width, 2),
+            style::PrintStyledContent(format!("{} bytes", self.metadata.size).yellow()),
+            cursor::MoveTo(0, 3),
+            style::PrintStyledContent(format!("[").dark_grey()),
+            cursor::MoveTo(self.progress_bar_max + 1, 3),
+            style::PrintStyledContent(format!("]").dark_grey()))
         .unwrap();
 
         self.player.flush().unwrap();
@@ -130,8 +117,8 @@ impl Player for Jukebox {
     fn draw_progression(&mut self) {
         queue!(
             self.player,
-            cursor::MoveTo(self.progress_bar_position, 4),
-            style::PrintStyledContent(format!(".").red()))
+            cursor::MoveTo(self.progress_bar_position, 3),
+            style::PrintStyledContent(format!("-").cyan().bold()))
         .unwrap();
 
         self.progress_bar_position += 1;
