@@ -94,21 +94,21 @@ impl Player for Jukebox {
         queue!(
             self.player,
             cursor::MoveTo(0, 0),
-            style::PrintStyledContent("Playing:".dark_grey()),
+            style::PrintStyledContent("Playing:".grey()),
             cursor::MoveTo(col_width, 0),
-            style::PrintStyledContent(format!("{}", self.metadata.filename).yellow()),
+            style::PrintStyledContent(format!("{}", self.metadata.filename).green()),
             cursor::MoveTo(0, 1),
-            style::PrintStyledContent("Type:".dark_grey()),
+            style::PrintStyledContent("Type:".grey()),
             cursor::MoveTo(col_width, 1),
-            style::PrintStyledContent(format!("{}", self.metadata.mimetype).yellow()),
+            style::PrintStyledContent(format!("{}", self.metadata.mimetype).green()),
             cursor::MoveTo(0, 2),
-            style::PrintStyledContent("Size:".dark_grey()),
+            style::PrintStyledContent("Size:".grey()),
             cursor::MoveTo(col_width, 2),
-            style::PrintStyledContent(format!("{} bytes", self.metadata.size).yellow()),
+            style::PrintStyledContent(format!("{} bytes", self.metadata.size).green()),
             cursor::MoveTo(0, 3),
-            style::PrintStyledContent(format!("[").dark_grey()),
+            style::PrintStyledContent(format!("[").grey()),
             cursor::MoveTo(self.progress_bar_max + 1, 3),
-            style::PrintStyledContent(format!("]").dark_grey()))
+            style::PrintStyledContent(format!("]").grey()))
         .unwrap();
 
         self.player.flush().unwrap();
@@ -118,7 +118,7 @@ impl Player for Jukebox {
         queue!(
             self.player,
             cursor::MoveTo(self.progress_bar_position, 3),
-            style::PrintStyledContent(format!("-").cyan().bold()))
+            style::PrintStyledContent(format!("=").green().bold()))
         .unwrap();
 
         self.progress_bar_position += 1;
@@ -151,7 +151,7 @@ impl Player for Jukebox {
         // This is not 100% accurate, but close enough to get the job done for now.
         self.audio_current = self.audio_elapsed.elapsed();
 
-        let next_chunk = self.audio_length / self.progress_bar_max.into() * self.progress_bar_next.into();
+        let next_chunk = self.audio_length / self.progress_bar_max as u32 * self.progress_bar_next as u32;
 
         if self.audio_current > next_chunk {
             self.progress_bar_next += 1;
