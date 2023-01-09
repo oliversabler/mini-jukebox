@@ -32,7 +32,6 @@ struct Jukebox {
     audio_current: Duration,
     audio_length: Duration,
     progress_bar_position: u16,
-    progress_bar_next: u16,
     progress_bar_max: u16,
     player: Stdout,
 }
@@ -72,7 +71,6 @@ impl Player for Jukebox {
             audio_elapsed: Instant::now(),
             audio_current: Duration::from_secs(0),
             audio_length: total_time,
-            progress_bar_next: 1,
             progress_bar_position: 1,
             progress_bar_max: 20,
             player: stdout()
@@ -147,10 +145,9 @@ impl Player for Jukebox {
         // This is not 100% accurate, but close enough to get the job done for now.
         self.audio_current = self.audio_elapsed.elapsed();
 
-        let next_chunk = self.audio_length / self.progress_bar_max as u32 * self.progress_bar_next as u32;
+        let next_chunk = self.audio_length / self.progress_bar_max as u32 * self.progress_bar_position as u32;
 
         if self.audio_current > next_chunk {
-            self.progress_bar_next += 1;
             self.draw_progression();
         }
     }
