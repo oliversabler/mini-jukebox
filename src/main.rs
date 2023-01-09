@@ -26,24 +26,6 @@ struct Metadata {
     size: u64
 }
 
-fn get_metadata(filepath: &Path) -> Metadata {
-    let filename = filepath.file_name().unwrap().to_str().unwrap();
-
-    let file_type = infer::get_from_path(filepath)
-        .expect("File read successfully.")
-        .expect("Known file type.");
-    
-    let metadata = metadata(filepath).unwrap();
-    let byte_size = metadata.len();
-
-    Metadata {
-        filepath: filepath.to_string_lossy().to_string(),
-        filename: String::from(filename), 
-        mimetype: String::from(file_type.mime_type()), 
-        size: byte_size
-    }
-}
-
 struct Jukebox {
     metadata: Metadata,
     audio_elapsed: Instant,
@@ -56,7 +38,7 @@ struct Jukebox {
 }
 
 trait Player {
-    fn new(path: &Path) -> Self;
+    fn new(filepath: &Path) -> Self;
 
     fn draw_metadata(&mut self);
 
@@ -68,11 +50,22 @@ trait Player {
 }
 
 impl Player for Jukebox {
-    fn new(path: &Path) -> Self {
-        let metadata = get_metadata(&path);
+    fn new(filepath: &Path) -> Self {
+        let file_type = infer::get_from_path(filepath)
+            .expect("File read successfully.")
+            .expect("Known file type.");
+
+        let metadata = metadata(filepath).unwrap();
+
+        let metadata = Metadata {
+            filepath: filepath.to_str().unwrap().to_string(),
+            filename: String::from(filepath.file_name().unwrap().to_str().unwrap()),
+            mimetype: String::from(file_type.mime_type()),
+            size: metadata.len()
+        };
 
         // Todo: Handle different mime types
-        let total_time = mp3_duration::from_path(&path).unwrap();
+        let total_time = mp3_duration::from_path(&filepath).unwrap();
 
         Self {
             metadata,
@@ -88,28 +81,31 @@ impl Player for Jukebox {
 
     fn draw_metadata(&mut self) {
         execute!(self.player, terminal::Clear(terminal::ClearType::All)).err();
+
+        let audio_info_types = vec!["Playing:", "Type:", "Size:"];
+        for (i, info_type) in audio_info_types.iter().enumerate() {
+            queue!(
+                self.player,
+                cursor::MoveTo(0, i as u16),
+                style::PrintStyledContent(info_type.grey())
+            ).unwrap();
+        };
         
         let col_width = 9;
 
         queue!(
             self.player,
-            cursor::MoveTo(0, 0),
-            style::PrintStyledContent("Playing:".grey()),
             cursor::MoveTo(col_width, 0),
             style::PrintStyledContent(format!("{}", self.metadata.filename).green()),
-            cursor::MoveTo(0, 1),
-            style::PrintStyledContent("Type:".grey()),
             cursor::MoveTo(col_width, 1),
             style::PrintStyledContent(format!("{}", self.metadata.mimetype).green()),
-            cursor::MoveTo(0, 2),
-            style::PrintStyledContent("Size:".grey()),
             cursor::MoveTo(col_width, 2),
             style::PrintStyledContent(format!("{} bytes", self.metadata.size).green()),
             cursor::MoveTo(0, 3),
             style::PrintStyledContent(format!("[").grey()),
             cursor::MoveTo(self.progress_bar_max + 1, 3),
-            style::PrintStyledContent(format!("]").grey()))
-        .unwrap();
+            style::PrintStyledContent(format!("]").grey())
+        ).unwrap();
 
         self.player.flush().unwrap();
     }
@@ -118,8 +114,8 @@ impl Player for Jukebox {
         queue!(
             self.player,
             cursor::MoveTo(self.progress_bar_position, 3),
-            style::PrintStyledContent(format!("=").green().bold()))
-        .unwrap();
+            style::PrintStyledContent(format!("=").green().bold())
+        ).unwrap();
 
         self.progress_bar_position += 1;
 
