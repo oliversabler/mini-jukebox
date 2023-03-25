@@ -51,14 +51,20 @@ trait Player {
 impl Player for Jukebox {
     fn new(filepath: &Path) -> Self {
         let file_type = infer::get_from_path(filepath)
-            .expect("File read successfully.")
-            .expect("Known file type.");
+            .expect("Could not read file from path: {filepath}")
+            .expect("Unknown file type.");
 
-        let metadata = metadata(filepath).unwrap();
+        let metadata = metadata(filepath)
+            .expect("Could not read metadata from {filepath}, check permissions or if path exists");
 
         let metadata = Metadata {
-            filepath: filepath.to_str().unwrap().to_string(),
-            filename: String::from(filepath.file_name().unwrap().to_str().unwrap()),
+            filepath: filepath.to_str().expect("Could not convert filepath: {filepath} to str").to_string(),
+            filename: String::from(
+                filepath
+                .file_name()
+                    .expect("Could not read filename from path: {filepath}")
+                .to_str()
+                    .expect("Could not convert filename to str")),
             mimetype: String::from(file_type.mime_type()),
             size: metadata.len()
         };
